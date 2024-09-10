@@ -22,10 +22,10 @@ def read_jsonl_file(filepath):
 
 # Define the path to your files
 files = [
-    'train_must_why/dependent_real_after.jsonl',
-    'train_must_why/dependent_real_before.jsonl',
-    'train_must_why/nondependent_real_after.jsonl',
-    'train_must_why/nondependent_real_before.jsonl'
+    'data/train_must_why/dependent_real_after.jsonl',
+    'data/train_must_why/dependent_real_before.jsonl',
+    'data/train_must_why/nondependent_real_after.jsonl',
+    'data/train_must_why/nondependent_real_before.jsonl'
 ]
 
 # Step 2: Extract relevant data for binary classification
@@ -73,17 +73,37 @@ def main():
     data_nondependent_real_before = read_jsonl_file(files[3])
 
     # Extract binary data
-    binary_data_after = extract_binary_data(data_dependent_real_after[:1])
+    binary_data_after = extract_binary_data(data_dependent_real_after[:10])  #for now trying 10 entries.
 
-    # Test the binary data using the Gemini model
-    responses = test_gemini_model(binary_data_after)
+    # Initialize an empty list to store responses and results
+    responses = []
+    binary_results = []
 
-    # Process responses to extract yes/no labels
-    binary_results = process_responses(responses)
+
+    for entry in binary_data_after:
+        # Test each entry individually using the Gemini model
+        response = test_gemini_model([entry])
+        
+        # Process the response to extract yes/no label
+        binary_result = process_responses(response)
+        
+        # Store the response and result
+        responses.append(response[0]) 
+        binary_results.append(binary_result[0])
+
+        # Print the result for the current entry
+        print(f"Prompt: {response[0]['prompt']}\nResponse: {response[0]['response']}\nBinary Result: {binary_result[0]}\n")
+
+
+    # # Test the binary data using the Gemini model
+    # responses = test_gemini_model(binary_data_after)
+
+    # # Process responses to extract yes/no labels
+    # binary_results = process_responses(responses)
     
-    # Print the results
-    for result, response in zip(binary_results, responses):
-        print(f"Prompt: {response['prompt']}\nResponse: {response['response']}\nBinary Result: {result}\n")
+    # # Print the results
+    # for result, response in zip(binary_results, responses):
+    #     print(f"Prompt: {response['prompt']}\nResponse: {response['response']}\nBinary Result: {result}\n")
 
 if __name__ == "__main__":
     main()
