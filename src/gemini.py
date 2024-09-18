@@ -50,16 +50,22 @@ files = [
 def extract_binary_data(data):
     binary_data = []
     for entry in data:
+        goal = entry['title']
         question = entry['binary_question']
         steps = entry['steps']
         step_pair = entry['step_pair_idx_asked_about']
+
+        procedure = "\n".join([f"Step {i+1}: {step}" for i, step in enumerate(steps)])
+
         # Create a prompt based on the step pair and question ------
-        prompt = f"Step {step_pair[0]+1}: {steps[step_pair[0]]}\nStep {step_pair[1]+1}: {steps[step_pair[1]]}\nQuestion: {question}"
+        prompt = f"Given a goal, a procedure to achieve that goal and a question about the steps in the procedure, you are required to answer the question in one sentence. \nGoal: {goal}\nProcedure:\n{procedure}\nMust Step {step_pair[0]+1} happen before Step {step_pair[1]+1}? Select between yes or no"
+
         binary_data.append({'prompt': prompt, 'label': question})
     return binary_data
 
 # Call the Gemini model with exception handling and caching
 def call_gemini(prompt, cache_key, cached_responses, idx):
+    # break point for prompt checking 
     if cache_key in cached_responses:
         print(f"Cache hit for record {idx}")
         return cached_responses[cache_key]['text']
@@ -98,7 +104,7 @@ def main():
     data_nondependent_real_before = read_jsonl_file(files[3])
 
     # Extract binary data
-    binary_data_after = extract_binary_data(data_dependent_real_after[:10])  #for now trying 10 entries.
+    binary_data_after = extract_binary_data(data_dependent_real_after[:1])  #for now trying 10 entries.
 
     responses = []
     binary_results = []
@@ -106,6 +112,9 @@ def main():
 
     for idx, entry in enumerate(binary_data_after):
         prompt = entry['prompt']
+        # add a break point and see what the prompt is , do not run the model and go through the prompts one by one for each of these 10 entries
+        # idx, raw input, prompt and the model output
+       # print(prompt)
 
         # Create a hash for the current prompt to check the cache
         hashed_prompt = hashlib.sha256(str(prompt).encode("utf-8")).hexdigest()
